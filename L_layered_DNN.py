@@ -22,27 +22,28 @@ class NeuralNet:
             self.parameters["W" + str(l)] = np.random.randn(layer_dims[l], layer_dims[l-1]) * 0.01
             self.parameters["b" + str(l)] = np.zeros((layer_dims[l], 1))
 
-    def train(self, X, Y, learning_rate=0.01, iterations=2000):
+    def train(self, X, Y, learning_rate=0.01, iterations=1500, n_mini_batches=10):
         ''' Input:
             X - input feature matrix (n_x, number of examples)
             Y - vectors containing true labels (1, number of examples)
             learning_rate - learning rate of gradient descent, defaults to 0.01
-            iterations - number of iterations of gradient descent updates, defaults to 2000
+            iterations - number of iterations of gradient descent updates, defaults to 1500
+            n_mini_batches - number of mini batches to be made from the dataset, defaults to 10
             Return:
             None
 
             Method uses mini-batch gradient descent to fit a Neural Network to the given data
         '''
         m = X.shape[1]
-        minibatches = range(0, m, int(m/5))
+        minibatches = range(0, m, int(m/int(n_mini_batches)))
         for i in range(iterations):
             for b in range(1, len(minibatches)):
                 X_mini_batch = X[:, minibatches[b-1]:minibatches[b]]
                 Y_mini_batch = Y[:, minibatches[b-1]:minibatches[b]]
                 AL, caches = self.__forward_pass(X_mini_batch)
                 if i%(iterations/10) == 0 and b == len(minibatches) - 1:
-                    cost = self.compute_cost(AL, Y_mini_batch)
-                    print("cost after %d iterations: %f"%(i, cost))
+                    loss = self.compute_loss(AL, Y_mini_batch)
+                    print("loss after %d iterations: %f"%(i, loss))
                 grads = self.__backward_pass(AL, Y_mini_batch, caches)
                 self.__update_parameters(grads, learning_rate)
 
@@ -109,7 +110,7 @@ class NeuralNet:
 
         return A, caches
 
-    def compute_cost(self, AL, Y):
+    def compute_loss(self, AL, Y):
         ''' computes the cost/loss of the Neural Networks predictions'''
         m = AL.shape[1]
         #Avoid Divide by Zero error due to rouding of numbers
@@ -120,8 +121,8 @@ class NeuralNet:
         assert np.sum(AL == 1) == 0
         assert np.sum(AL == 0) == 0
 
-        cost = (np.sum(Y * np.log(AL) + (1 - Y) * np.log(1 - AL)))/-m
-        return cost
+        loss = (np.sum(Y * np.log(AL) + (1 - Y) * np.log(1 - AL)))/-m
+        return loss
 
     def __backward_linear(self, dZ, cache):
         ''' Input:
